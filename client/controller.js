@@ -2,23 +2,20 @@ import tcpPkg from '../tcp_pkg/tcp_pkg.js';
 
 class controller {
     constructor(client) {
-        // this.sessions = sessions
-        // console.log(sessions)
         this.client = client
         this.client.setEncoding = 'UTF-8';
         this.client.lastPkg = null;
-        this.client.name = "匿名用户"
+    }
+    print(str){
+        console.log(str)
     }
 
-    getSessions(sessions) {
-        this.sessions = sessions
+    handleWrite(data){
+        let str=JSON.stringify(data)
+        let buf = tcpPkg.packageData(str)
+        this.client.write(buf)
     }
 
-    handleAll() {
-        for (client in this.sessions) {
-            client.write(this.raw)
-        }
-    }
     handleGateway(str) {
         this.o = JSON.parse(str)
         console.log(o)
@@ -59,7 +56,7 @@ class controller {
             lastPkg.copy(curBuffer, 0, offset + 2, offset + pkgLen);
 
             //#TODO 业务
-            //this.handleGateway(curBuffer.toString())
+            this.handleGateway(curBuffer.toString())
             console.log(curBuffer.toString())
 
             offset += pkgLen;
