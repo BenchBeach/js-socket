@@ -14,28 +14,56 @@ class controller {
         this.sessions = sessions
     }
 
-    handleAll() {
-        for (client in this.sessions) {
-            client.write(this.raw)
+    handleAll(str) {
+        let id;
+        for(id in this.sessions) {
+            let buf=tcpPkg.packageData(str)
+            this.sessions[id].client.write(buf)
+        }
+    }
+    handleName(){
+        let flag=false;
+        let id;
+        for(id in this.sessions){
+            if(this.sessions[id].client.name==this.o.data){
+                flag=true
+            }
+        }
+        if(flag){
+            let back ={
+                type:'exit',
+                data:{
+                    name:'server',
+                    msg:'昵称重复啦'
+                }
+            }
+            this.client.write(tcpPkg.packageData(JSON.stringify(back)))
+            this.client.end()
+        }else{
+            this.client.name=this.o.data
         }
     }
     handleGateway(str) {
+        console.log(str)
         this.o = JSON.parse(str)
-        console.log(o)
-        // switch (o.type) {
-        //     case 'msgAll':
-        //         this.handleAll();
-        //         break;
-        //     case 'msgPerson':
-        //         this.handlePerson();
-        //         break;
-        //     case 'file':
-        //         this.handleFile();
-        //         break;
-        //     default:
-        //         this.handleAll();
-        //         break;
-        // }
+        // console.log(o)
+        switch (this.o.type) {
+            case 'msg':
+                this.handleAll(str);
+                break;
+            case 'msgPerson':
+                this.handlePerson();
+                break;
+            case 'file':
+                this.handleFile();
+                break;
+            case 'name':
+                this.handleName();
+                break
+            default:
+                this.handleAll();
+                break;
+        }
     }
     handlePkg(data) {
         let lastPkg = this.client.lastPkg;
@@ -59,8 +87,8 @@ class controller {
             lastPkg.copy(curBuffer, 0, offset + 2, offset + pkgLen);
 
             //#TODO 业务
-            //this.handleGateway(curBuffer.toString())
-            console.log(curBuffer.toString())
+            this.handleGateway(curBuffer.toString())
+            // console.log(curBuffer.toString())
 
             offset += pkgLen;
             if (offset >= lastPkg.length) {

@@ -15,7 +15,6 @@ server.on('connection', (client) => {
     client.id = uuid();
     sessions[client.id] =new controller(client);
     sessions[client.id].getSessions(sessions)
-
     client.on('data', data => {
         //console.log(`客户端${client.name}发来一个信息：${data}`);
         sessions[client.id].handlePkg(data);

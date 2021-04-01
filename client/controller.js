@@ -9,30 +9,37 @@ class controller {
     print(str){
         console.log(str)
     }
-
+    setName(name){
+        this.name=name
+    }
     handleWrite(data){
         let str=JSON.stringify(data)
         let buf = tcpPkg.packageData(str)
         this.client.write(buf)
     }
-
+    handleMsg(){
+        process.stdout.clearLine();
+        process.stdout.cursorTo(0);
+        const {msg,name}=this.o.data
+        process.stdout.write(`${name}：${msg}\n`)
+        process.stdout.write(`\x1b[31m${this.name}：\x1b[0m`);
+    }
     handleGateway(str) {
         this.o = JSON.parse(str)
-        console.log(o)
-        // switch (o.type) {
-        //     case 'msgAll':
-        //         this.handleAll();
-        //         break;
-        //     case 'msgPerson':
-        //         this.handlePerson();
-        //         break;
-        //     case 'file':
-        //         this.handleFile();
-        //         break;
-        //     default:
-        //         this.handleAll();
-        //         break;
-        // }
+        switch (this.o.type) {
+            case 'msg':
+                this.handleMsg();
+                break;
+            case 'msgPerson':
+                this.handlePerson();
+                break;
+            case 'file':
+                this.handleFile();
+                break;
+            default:
+                this.handleAll();
+                break;
+        }
     }
     handlePkg(data) {
         let lastPkg = this.client.lastPkg;
@@ -57,7 +64,6 @@ class controller {
 
             //#TODO 业务
             this.handleGateway(curBuffer.toString())
-            console.log(curBuffer.toString())
 
             offset += pkgLen;
             if (offset >= lastPkg.length) {
