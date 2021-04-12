@@ -1,6 +1,7 @@
 import net from 'net';
 import tcpPkg from '../tcp_pkg/tcp_pkg.js';
-import {port,hostname} from './config.js'
+import { port, hostname } from './config.js'
+import fs from 'fs'
 
 class request {
     constructor(ctrl) {
@@ -9,30 +10,42 @@ class request {
     setName(name) {
         this.name = name
     }
-    handleFile(msg){
+    handleFile(msg) {
         const socket = new net.Socket();
-        let data = {
-            type:'file',
-            data:{
-                fileName:msg
+
+        socket.connect(port, hostname, () => {
+            const fileInfo = fs.statSync(msg);
+            const fileSize = fileInfo.size;
+            const packageSize = 4096;
+            let sendSize = 0;
+            let strData = JSON.stringify({
+                type: 'file',
+                data: {
+                    fileName: msg.split('/').slice(-1)[0],
+                    fileSize
+                }
+            })
+            socket.write(tcpPkg.packageData(strData))
+            let fd = fs.openSync(msg, 'r');
+            let readBuf = new Buffer.alloc(packageSize);
+            while (sendSize < fileSize) {
+                fs.readSync(fd, readBuf, 0, readBuf.length, sendSize);
+                let Filedata = readBuf.toString('hex');
+                socket.write(tcpPkg.packageData(Filedata));
+                sendSize += packageSize;
             }
-        }
-        socket.connect(port, hostname, (client) => {
-            let str=JSON.stringify(data)
-            let buf = tcpPkg.packageData(str)
-            socket.write(buf)
         });
-        
+
         socket.on('data', (msg) => {
-            console('what?')
+            console.log('what?')
         });
-        
+
         socket.on('error', error => {
             console.log('error' + error);
         });
-        
+
         socket.on('close', () => {
-            console.log('文件传输完成');
+            this.ctrl.handleGateway(JSON.stringify({type:'msg',data:{name:'文件助手',msg:`文件${msg.split('/').slice(-1)[0]}传输完成`}}))
         });
     }
     Interceptors(msg) {

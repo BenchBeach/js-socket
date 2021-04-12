@@ -1,13 +1,13 @@
 import tcpPkg from '../tcp_pkg/tcp_pkg.js';
-import fs from 'fs/promises'
+import fs from 'fs'
 
 class controller {
-    constructor(client,type=0) {
+    constructor(client, type = 0) {
         /*type
         0:msg
         1:file
         */
-        this.type=type
+        this.type = type
         this.client = client
         this.client.setEncoding = 'UTF-8';
         this.client.lastPkg = null;
@@ -41,59 +41,68 @@ class controller {
     }
     handleAll(str) {
         let id;
-        let buf=tcpPkg.packageData(str)
-        for(id in this.sessions) {
-            if(this.o.data.name!=this.sessions[id].client.name)
-            this.sessions[id].client.write(buf)
+        let buf = tcpPkg.packageData(str)
+        for (id in this.sessions) {
+            if (this.o.data.name != this.sessions[id].client.name)
+                this.sessions[id].client.write(buf)
         }
     }
 
-    handlePerson(str){
+    handlePerson(str) {
         let id;
-        let buf=tcpPkg.packageData(str)
-        for(id in this.sessions) {
-            if(this.o.data.toName==this.sessions[id].client.name){
+        let buf = tcpPkg.packageData(str)
+        for (id in this.sessions) {
+            if (this.o.data.toName == this.sessions[id].client.name) {
                 this.sessions[id].client.write(buf)
                 break;
             }
         }
     }
-    handleName(){
-        let flag=false;
+    handleName() {
+        let flag = false;
         let id;
-        for(id in this.sessions){
-            if(this.sessions[id].client.name==this.o.data){
-                flag=true
+        for (id in this.sessions) {
+            if (this.sessions[id].client.name == this.o.data) {
+                flag = true
             }
         }
-        if(flag){
-            let back ={
-                type:'exit',
-                data:{
-                    name:'server',
-                    msg:'昵称重复啦'
+        if (flag) {
+            let back = {
+                type: 'exit',
+                data: {
+                    name: 'server',
+                    msg: '昵称重复啦'
                 }
             }
             this.client.write(tcpPkg.packageData(JSON.stringify(back)))
             this.client.end()
+        } else {
+            this.client.name = this.o.data
+        }
+    }
+
+    handleFile() {
+        this.type = 1
+        this.client.name = "文件传输"
+        if (!fs.existsSync('./file')) {
+            fs.mkdirSync('./file')
+        }
+        this.hasSend = 0;
+        this.fileBuf = '';//buffer存储对象
+        this.fd = fs.openSync(`./file/${this.o.data.fileName}`, 'w+');
+    }
+    handleRaw(data) {
+        this.hasSend = this.hasSend + 4096;
+        if(this.hasSend>=this.o.data.fileSize*2){
+            let pack = Buffer.from(data.slice(0,this.o.data.fileSize*2%4096), 'hex');
+            fs.appendFileSync(this.fd, pack);
+            fs.close(this.fd)
+            this.client.end()
         }else{
-            this.client.name=this.o.data
+            let pack = Buffer.from(data, 'hex');
+            fs.appendFileSync(this.fd, pack);
         }
     }
-
-    async handleFile(){
-        this.type=1
-        try{
-            const dirStat=fs.stat('./files')
-            if(!dirStat.isDirectory()){
-                await fs.mkdir('./file')
-            }
-            await fs.writeFile(`./files/${this.o.data.fileName}`)
-        }catch(error){
-            console.log('出错:',error.message)
-        }
-    }
-
     handlePkg(data) {
         let lastPkg = this.client.lastPkg;
         if (lastPkg) {
@@ -116,12 +125,12 @@ class controller {
             lastPkg.copy(curBuffer, 0, offset + 2, offset + pkgLen);
 
             //#TODO 业务
-            switch(this.type){
+            switch (this.type) {
                 case 0:
                     this.handleGateway(curBuffer.toString())
                     break;
                 case 1:
-                    this.handleRaw(curBuffer)
+                    this.handleRaw(curBuffer.toString())
             }
             // console.log(curBuffer.toString())
 
