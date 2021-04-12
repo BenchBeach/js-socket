@@ -1,4 +1,5 @@
 import net from 'net';
+import tcpPkg from '../tcp_pkg/tcp_pkg.js';
 import {port,hostname} from './config.js'
 
 class request {
@@ -9,7 +10,30 @@ class request {
         this.name = name
     }
     handleFile(msg){
+        const socket = new net.Socket();
+        let data = {
+            type:'file',
+            data:{
+                fileName:msg
+            }
+        }
+        socket.connect(port, hostname, (client) => {
+            let str=JSON.stringify(data)
+            let buf = tcpPkg.packageData(str)
+            socket.write(buf)
+        });
         
+        socket.on('data', (msg) => {
+            console('what?')
+        });
+        
+        socket.on('error', error => {
+            console.log('error' + error);
+        });
+        
+        socket.on('close', () => {
+            console.log('文件传输完成');
+        });
     }
     Interceptors(msg) {
         let msgPersonReg = /^#.+#/g

@@ -1,10 +1,8 @@
 import net from 'net';
 import readline from 'readline';
 import { v1 as uuid } from 'uuid';
-import tcpPkg from '../tcp_pkg/tcp_pkg.js ';
 import controller from './controller.js';
-import fileServer from './fileServer.js'
-
+import {port,hostname} from './config.js'
 
 let sessions = {};
 

@@ -1,4 +1,5 @@
 import tcpPkg from '../tcp_pkg/tcp_pkg.js';
+import fs from 'fs/promises'
 
 class controller {
     constructor(client,type=0) {
@@ -17,6 +18,27 @@ class controller {
         this.sessions = sessions
     }
 
+    handleGateway(str) {
+        console.log(str)
+        this.o = JSON.parse(str)
+        switch (this.o.type) {
+            case 'msg':
+                this.handleAll(str);
+                break;
+            case 'msgPerson':
+                this.handlePerson(str);
+                break;
+            case 'file':
+                this.handleFile();
+                break;
+            case 'name':
+                this.handleName();
+                break
+            default:
+                this.handleAll();
+                break;
+        }
+    }
     handleAll(str) {
         let id;
         let buf=tcpPkg.packageData(str)
@@ -25,6 +47,7 @@ class controller {
             this.sessions[id].client.write(buf)
         }
     }
+
     handlePerson(str){
         let id;
         let buf=tcpPkg.packageData(str)
@@ -57,28 +80,20 @@ class controller {
             this.client.name=this.o.data
         }
     }
-    handleGateway(str) {
-        console.log(str)
-        this.o = JSON.parse(str)
-        // console.log(o)
-        switch (this.o.type) {
-            case 'msg':
-                this.handleAll(str);
-                break;
-            case 'msgPerson':
-                this.handlePerson(str);
-                break;
-            case 'file':
-                this.handleFile();
-                break;
-            case 'name':
-                this.handleName();
-                break
-            default:
-                this.handleAll();
-                break;
+
+    async handleFile(){
+        this.type=1
+        try{
+            const dirStat=fs.stat('./files')
+            if(!dirStat.isDirectory()){
+                await fs.mkdir('./file')
+            }
+            await fs.writeFile(`./files/${this.o.data.fileName}`)
+        }catch(error){
+            console.log('出错:',error.message)
         }
     }
+
     handlePkg(data) {
         let lastPkg = this.client.lastPkg;
         if (lastPkg) {
@@ -101,7 +116,13 @@ class controller {
             lastPkg.copy(curBuffer, 0, offset + 2, offset + pkgLen);
 
             //#TODO 业务
-            this.handleGateway(curBuffer.toString())
+            switch(this.type){
+                case 0:
+                    this.handleGateway(curBuffer.toString())
+                    break;
+                case 1:
+                    this.handleRaw(curBuffer)
+            }
             // console.log(curBuffer.toString())
 
             offset += pkgLen;
