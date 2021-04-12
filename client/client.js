@@ -1,15 +1,16 @@
 import net from 'net';
 import controller from './controller.js';
 import readline from 'readline';
+import request from './request.js';
+import {port,hostname} from './config.js'
 
 const socket = new net.Socket();
 
-const port = 8848;
-const hostname = 'localhost';
+
 let name=''
 let ctrl = new controller(socket)
+let req=new request(ctrl)
 socket.connect(port, hostname, () => {
-
 });
 
 
@@ -19,10 +20,12 @@ socket.on('data', (msg) => {
 
 socket.on('error', error => {
     console.log('error' + error);
+    process.exit()
 });
 
 socket.on('close', () => {
     console.log('服务器端下线了');
+    process.exit()
 });
 
 //bind input output stream
@@ -47,18 +50,12 @@ rl.question('\n\x1b[31m请输入你进入聊天室的昵称：\x1b[0m', (ans) =>
     name=ans
     ctrl.handleWrite(data)
     ctrl.setName(ans)
+    req.setName(ans)
     process.stdout.write(`\x1b[31m开始聊天吧\n${name}：\x1b[0m`);
 });
 
 rl.on('line', (msg) => {
-    let data = {
-        type: 'msg',
-        data: {
-            msg,
-            name
-        }
-    }
-    ctrl.handleWrite(data)
+    req.Interceptors(msg)
     process.stdout.clearLine();
     process.stdout.cursorTo(0,100);
     process.stdout.write(`\x1b[31m${name}：\x1b[0m`);

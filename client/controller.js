@@ -24,6 +24,20 @@ class controller {
         process.stdout.write(`${name}：${msg}\n`)
         process.stdout.write(`\x1b[31m${this.name}：\x1b[0m`);
     }
+    handlePerson(){
+        process.stdout.clearLine();
+        process.stdout.cursorTo(0);
+        const {msg,name}=this.o.data
+        process.stdout.write(`\x1B[36m${name} TO U：${msg}\x1B[0m\n`)
+        process.stdout.write(`\x1b[31m${this.name}：\x1b[0m`);
+    }
+    handleExit(){
+        process.stdout.clearLine();
+        process.stdout.cursorTo(0);
+        const {msg,name}=this.o.data
+        process.stdout.write(`${name}：${msg}\n`)
+        process.exit()
+    }
     handleGateway(str) {
         this.o = JSON.parse(str)
         switch (this.o.type) {
@@ -32,6 +46,9 @@ class controller {
                 break;
             case 'msgPerson':
                 this.handlePerson();
+                break;
+            case 'exit':
+                this.handleExit()
                 break;
             case 'file':
                 this.handleFile();

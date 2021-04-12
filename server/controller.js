@@ -1,9 +1,12 @@
 import tcpPkg from '../tcp_pkg/tcp_pkg.js';
 
 class controller {
-    constructor(client) {
-        // this.sessions = sessions
-        // console.log(sessions)
+    constructor(client,type=0) {
+        /*type
+        0:msg
+        1:file
+        */
+        this.type=type
         this.client = client
         this.client.setEncoding = 'UTF-8';
         this.client.lastPkg = null;
@@ -16,9 +19,20 @@ class controller {
 
     handleAll(str) {
         let id;
+        let buf=tcpPkg.packageData(str)
         for(id in this.sessions) {
-            let buf=tcpPkg.packageData(str)
+            if(this.o.data.name!=this.sessions[id].client.name)
             this.sessions[id].client.write(buf)
+        }
+    }
+    handlePerson(str){
+        let id;
+        let buf=tcpPkg.packageData(str)
+        for(id in this.sessions) {
+            if(this.o.data.toName==this.sessions[id].client.name){
+                this.sessions[id].client.write(buf)
+                break;
+            }
         }
     }
     handleName(){
@@ -52,7 +66,7 @@ class controller {
                 this.handleAll(str);
                 break;
             case 'msgPerson':
-                this.handlePerson();
+                this.handlePerson(str);
                 break;
             case 'file':
                 this.handleFile();
