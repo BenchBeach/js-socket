@@ -1,0 +1,16 @@
+"filename", "language", "JavaScript", "Markdown", "JSON", "PDF", "comment", "blank", "total"
+"d:\mp\js-socket\README.md", "Markdown", 0, 3, 0, 0, 0, 0, 3
+"d:\mp\js-socket\client\client.js", "JavaScript", 47, 0, 0, 0, 2, 13, 62
+"d:\mp\js-socket\client\config.js", "JavaScript", 3, 0, 0, 0, 0, 1, 4
+"d:\mp\js-socket\client\controller.js", "JavaScript", 98, 0, 0, 0, 1, 7, 106
+"d:\mp\js-socket\client\request.js", "JavaScript", 79, 0, 0, 0, 0, 6, 85
+"d:\mp\js-socket\file\1.pdf", "PDF", 0, 0, 0, 17062, 0, 198, 17260
+"d:\mp\js-socket\file\README.md", "Markdown", 0, 3, 0, 0, 0, 0, 3
+"d:\mp\js-socket\package-lock.json", "JSON", 0, 0, 31, 0, 0, 1, 32
+"d:\mp\js-socket\package.json", "JSON", 0, 0, 16, 0, 0, 1, 17
+"d:\mp\js-socket\server\config.js", "JavaScript", 4, 0, 0, 0, 0, 1, 5
+"d:\mp\js-socket\server\controller.js", "JavaScript", 141, 0, 0, 0, 6, 11, 158
+"d:\mp\js-socket\server\server.js", "JavaScript", 37, 0, 0, 0, 1, 10, 48
+"d:\mp\js-socket\tcp_pkg\tcp_pkg.js", "JavaScript", 17, 0, 0, 0, 0, 2, 19
+"d:\mp\js-socket\test\1.pdf", "PDF", 0, 0, 0, 16939, 0, 198, 17137
+"Total", "-", 426, 6, 47, 34001, 10, 449, 34939

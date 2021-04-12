@@ -1,0 +1,43 @@
+Date : 2021-04-12 16:21:50
+Directory : d:\mp\js-socket
+Total : 12 files,  17415 codes, 10 comments, 251 blanks, all 17676 lines
+
+Languages
++------------+------------+------------+------------+------------+------------+
+| language   | files      | code       | comment    | blank      | total      |
++------------+------------+------------+------------+------------+------------+
+| PDF        |          1 |     16,939 |          0 |        198 |     17,137 |
+| JavaScript |          8 |        426 |         10 |         51 |        487 |
+| JSON       |          2 |         47 |          0 |          2 |         49 |
+| Markdown   |          1 |          3 |          0 |          0 |          3 |
++------------+------------+------------+------------+------------+------------+
+
+Directories
++--------------------------------------+------------+------------+------------+------------+------------+
+| path                                 | files      | code       | comment    | blank      | total      |
++--------------------------------------+------------+------------+------------+------------+------------+
+| .                                    |         12 |     17,415 |         10 |        251 |     17,676 |
+| client                               |          4 |        227 |          3 |         27 |        257 |
+| server                               |          3 |        182 |          7 |         22 |        211 |
+| tcp_pkg                              |          1 |         17 |          0 |          2 |         19 |
+| test                                 |          1 |     16,939 |          0 |        198 |     17,137 |
++--------------------------------------+------------+------------+------------+------------+------------+
+
+Files
++--------------------------------------+------------+------------+------------+------------+------------+
+| filename                             | language   | code       | comment    | blank      | total      |
++--------------------------------------+------------+------------+------------+------------+------------+
+| d:\mp\js-socket\README.md            | Markdown   |          3 |          0 |          0 |          3 |
+| d:\mp\js-socket\client\client.js     | JavaScript |         47 |          2 |         13 |         62 |
+| d:\mp\js-socket\client\config.js     | JavaScript |          3 |          0 |          1 |          4 |
+| d:\mp\js-socket\client\controller.js | JavaScript |         98 |          1 |          7 |        106 |
+| d:\mp\js-socket\client\request.js    | JavaScript |         79 |          0 |          6 |         85 |
+| d:\mp\js-socket\package-lock.json    | JSON       |         31 |          0 |          1 |         32 |
+| d:\mp\js-socket\package.json         | JSON       |         16 |          0 |          1 |         17 |
+| d:\mp\js-socket\server\config.js     | JavaScript |          4 |          0 |          1 |          5 |
+| d:\mp\js-socket\server\controller.js | JavaScript |        141 |          6 |         11 |        158 |
+| d:\mp\js-socket\server\server.js     | JavaScript |         37 |          1 |         10 |         48 |
+| d:\mp\js-socket\tcp_pkg\tcp_pkg.js   | JavaScript |         17 |          0 |          2 |         19 |
+| d:\mp\js-socket\test\1.pdf           | PDF        |     16,939 |          0 |        198 |     17,137 |
+| Total                                |            |     17,415 |         10 |        251 |     17,676 |
++--------------------------------------+------------+------------+------------+------------+------------+
