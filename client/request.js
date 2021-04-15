@@ -2,10 +2,12 @@ import net from 'net';
 import tcpPkg from '../tcp_pkg/tcp_pkg.js';
 import { port, hostname } from './config.js'
 import fs from 'fs'
+import controller from './controller.js';
 
 class request {
     constructor(ctrl) {
         this.ctrl = ctrl
+        this.type = 0
     }
     setName(name) {
         this.name = name
@@ -45,7 +47,33 @@ class request {
         });
 
         socket.on('close', () => {
-            this.ctrl.handleGateway(JSON.stringify({type:'msg',data:{name:'文件助手',msg:`文件${msg.split('/').slice(-1)[0]}传输完成`}}))
+            this.ctrl.handleGateway(JSON.stringify({ type: 'msg', data: { name: '文件助手', msg: `文件${msg.split('/').slice(-1)[0]}传输完成` } }))
+        });
+    }
+    handleGet() {
+        this.data = {
+            type: 'get'
+        }
+        this.ctrl.handleWrite(this.data)
+    }
+    handleDownload() {
+        let ctrl = new controller(socket)
+        socket.connect(port, hostname, () => {
+        });
+
+
+        socket.on('data', (msg) => {
+            ctrl.handlePkg(msg)
+        });
+
+        socket.on('error', error => {
+            console.log('error' + error);
+            process.exit()
+        });
+
+        socket.on('close', () => {
+            console.log('服务器端下线了');
+            process.exit()
         });
     }
     Interceptors(msg) {
@@ -57,6 +85,12 @@ class request {
             switch (toName) {
                 case 'file':
                     this.handleFile(toMsg.trim())
+                    break;
+                case 'get':
+                    this.handleGet()
+                    break;
+                case 'download':
+                    this.handleDownload(toMsg.trim())
                     break;
                 default:
                     this.data = {

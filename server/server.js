@@ -43,5 +43,7 @@ let rl = readline.createInterface({
 });
 
 rl.on('line', (msg) => {
-    console.log(msg + 123)
+    if(msg=='q'){
+        process.exit();
+    }
 })

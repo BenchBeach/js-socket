@@ -55,6 +55,9 @@ rl.question('\n\x1b[31m请输入你进入聊天室的昵称：\x1b[0m', (ans) =>
 });
 
 rl.on('line', (msg) => {
+    if(msg=='q'){
+        process.exit();
+    }
     req.Interceptors(msg)
     process.stdout.clearLine();
     process.stdout.cursorTo(0,100);

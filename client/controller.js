@@ -38,6 +38,18 @@ class controller {
         process.stdout.write(`${name}：${msg}\n`)
         process.exit()
     }
+    handleGet(){
+        process.stdout.clearLine();
+        process.stdout.cursorTo(0);
+        if(this.o.data.list.length!=0){
+            for(let item of this.o.data.list){
+                process.stdout.write(`\x1B[36m文件：${item}\x1B[0m\n`)
+            }
+        }else{
+            process.stdout.write(`\x1B[36m没有文件\x1B[0m\n`)
+        }
+        process.stdout.write(`\x1b[31m${this.name}：\x1b[0m`);
+    }
     handleGateway(str) {
         this.o = JSON.parse(str)
         switch (this.o.type) {
@@ -53,8 +65,11 @@ class controller {
             case 'file':
                 this.handleFile();
                 break;
+            case 'get':
+                this.handleGet()
+                break;
             default:
-                this.handleAll();
+                this.handleMsg();
                 break;
         }
     }
