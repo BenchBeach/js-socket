@@ -56,9 +56,11 @@ class request {
         }
         this.ctrl.handleWrite(this.data)
     }
-    handleDownload() {
+    handleDownload(toMsg) {
+        const socket = new net.Socket();
         let ctrl = new controller(socket)
         socket.connect(port, hostname, () => {
+            ctrl.handleWrite({type:'dowmload',data:{fileName:toMsg}})
         });
 
 
@@ -72,7 +74,6 @@ class request {
         });
 
         socket.on('close', () => {
-            console.log('服务器端下线了');
             process.exit()
         });
     }

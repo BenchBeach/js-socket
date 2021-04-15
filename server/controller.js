@@ -130,7 +130,7 @@ class controller {
             let strData = JSON.stringify({
                 type: 'file',
                 data: {
-                    fileName: msg.split('/').slice(-1)[0],
+                    fileName: this.o.data.fileName,
                     fileSize
                 }
             })
@@ -146,8 +146,9 @@ class controller {
     }
     handleRaw(data) {
         this.hasSend = this.hasSend + 4096;
-        if (this.hasSend >= this.o.data.fileSize * 2) {
-            let pack = Buffer.from(data.slice(0, this.o.data.fileSize * 2 % 4096), 'hex');
+        console.log(this.hasSend,':',this.o.data.fileSize)
+        if (this.hasSend >= this.o.data.fileSize) {
+            let pack = Buffer.from(data.slice(0, this.o.data.fileSize % 4096), 'hex');
             fs.appendFileSync(this.fd, pack);
             fs.close(this.fd)
             this.client.end()
@@ -177,7 +178,6 @@ class controller {
             let curBuffer = Buffer.allocUnsafe(pkgLen - 2)
             lastPkg.copy(curBuffer, 0, offset + 2, offset + pkgLen);
 
-            //#TODO 业务
             switch (this.type) {
                 case 0:
                     this.handleGateway(curBuffer.toString())

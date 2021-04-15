@@ -1,7 +1,9 @@
 import tcpPkg from '../tcp_pkg/tcp_pkg.js';
+import fs from 'fs'
 
 class controller {
     constructor(client) {
+        this.type=0
         this.client = client
         this.client.setEncoding = 'UTF-8';
         this.client.lastPkg = null;
@@ -50,6 +52,27 @@ class controller {
         }
         process.stdout.write(`\x1b[31m${this.name}：\x1b[0m`);
     }
+    handleFile() {
+        this.type = 1
+        if (!fs.existsSync('./downfile')) {
+            fs.mkdirSync('./downfile')
+        }
+        this.hasSend = 0;
+        this.fileBuf = '';//buffer存储对象
+        this.fd = fs.openSync(`./downfile/${this.o.data.fileName}`, 'w+');
+    }
+    handleRaw(data) {
+        this.hasSend = this.hasSend + 4096;
+        if (this.hasSend >= this.o.data.fileSize * 2) {
+            let pack = Buffer.from(data.slice(0, this.o.data.fileSize * 2 % 4096), 'hex');
+            fs.appendFileSync(this.fd, pack);
+            fs.close(this.fd)
+            this.client.end()
+        } else {
+            let pack = Buffer.from(data, 'hex');
+            fs.appendFileSync(this.fd, pack);
+        }
+    }
     handleGateway(str) {
         this.o = JSON.parse(str)
         switch (this.o.type) {
@@ -94,8 +117,13 @@ class controller {
             let curBuffer = Buffer.allocUnsafe(pkgLen - 2)
             lastPkg.copy(curBuffer, 0, offset + 2, offset + pkgLen);
 
-            //#TODO 业务
-            this.handleGateway(curBuffer.toString())
+            switch (this.type) {
+                case 0:
+                    this.handleGateway(curBuffer.toString())
+                    break;
+                case 1:
+                    this.handleRaw(curBuffer.toString())
+            }
 
             offset += pkgLen;
             if (offset >= lastPkg.length) {
