@@ -63,11 +63,11 @@ class controller {
     }
     handleRaw(data) {
         this.hasSend = this.hasSend + 4096;
-        if (this.hasSend >= this.o.data.fileSize * 2) {
-            let pack = Buffer.from(data.slice(0, this.o.data.fileSize * 2 % 4096), 'hex');
+        if (this.hasSend >= this.o.data.fileSize) {
+            let pack = Buffer.from(data.slice(0, this.o.data.fileSize*2 % 4096), 'hex');
             fs.appendFileSync(this.fd, pack);
-            fs.close(this.fd)
-            this.client.end()
+            fs.closeSync(this.fd)
+            this.client.destroy()
         } else {
             let pack = Buffer.from(data, 'hex');
             fs.appendFileSync(this.fd, pack);

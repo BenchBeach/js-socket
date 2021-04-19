@@ -74,7 +74,7 @@ class request {
         });
 
         socket.on('close', () => {
-            process.exit()
+            this.ctrl.handleGateway(JSON.stringify({ type: 'msg', data: { name: '文件助手', msg: `文件传输完成` } }))
         });
     }
     Interceptors(msg) {

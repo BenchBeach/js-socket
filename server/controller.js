@@ -41,6 +41,10 @@ class controller {
             case 'get':
                 this.handleGetlist();
                 break
+            // case 'closeDown':
+            //     console.log('closeclient')
+            //     this.client.destroy();
+            //     break;
             default:
                 this.handleAll();
                 break;
@@ -121,7 +125,6 @@ class controller {
     }
 
     handleDownload(){
-        this.type = 2
         this.client.name = "文件下载"
         const fileInfo = fs.statSync(`./file/${this.o.data.fileName}`);
             const fileSize = fileInfo.size;
@@ -143,15 +146,17 @@ class controller {
                 this.client.write(tcpPkg.packageData(Filedata));
                 sendSize += packageSize;
             }
+            // console.log('传输完成')
+            // this.client.destroy()
     }
     handleRaw(data) {
         this.hasSend = this.hasSend + 4096;
         console.log(this.hasSend,':',this.o.data.fileSize)
         if (this.hasSend >= this.o.data.fileSize) {
-            let pack = Buffer.from(data.slice(0, this.o.data.fileSize % 4096), 'hex');
+            let pack = Buffer.from(data.slice(0, this.o.data.fileSize*2 % 4096), 'hex');
             fs.appendFileSync(this.fd, pack);
-            fs.close(this.fd)
-            this.client.end()
+            fs.closeSync(this.fd)
+            this.client.destroy()
         } else {
             let pack = Buffer.from(data, 'hex');
             fs.appendFileSync(this.fd, pack);
