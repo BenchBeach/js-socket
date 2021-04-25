@@ -6,17 +6,27 @@ import readline from 'readline';
 
 const numCPUs=os.cpus().length;
 
-let worker = [];
+let workers = [];
 let socketCnt=0;
 
 for(let i=0;i<numCPUs;i++){
-    worker.push(cp.fork('server.js',[i]))
+    workers.push(cp.fork('./server/server.js',[i]))
 }
 
+for(let i=0;i<numCPUs;i++){
+    workers[i].on('message',(m)=>{
+        for(let index in workers){
+            if(index!=i){
+                workers[index].send(m)
+            }
+        }
+    })
+}
 const server = new net.createServer({ pauseOnConnect: true });
 
 server.on('connection', (client)=>{
-    worker[socketCnt].send('socket',client,{keepOpen:ture});
+    workers[socketCnt%numCPUs].send('socket',client,{keepOpen:true});
+    socketCnt++
 })
 
 server.listen(port, hostname, () => {

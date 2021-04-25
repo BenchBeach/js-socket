@@ -1,6 +1,7 @@
-import net from 'net';
-import readline from 'readline';
-import { v1 as uuid } from 'uuid';
+import tcpPkg from '../tcp_pkg/tcp_pkg.js';
+import {
+    v1 as uuid
+} from 'uuid';
 import controller from './controller.js';
 
 let sessions = {};
@@ -26,6 +27,27 @@ process.on('message', (m, client) => {
                 console.log(`客户端${client.name}下线了`);
             });
         }
+    } else {
+        const {type,data}=JSON.parse(m);
+        console.log(type,"123",data)
+        let buf
+        switch (type) {
+            case 'all':
+                buf = tcpPkg.packageData(data)
+                for (let id in sessions) {
+                    sessions[id].client.write(buf)
+                }
+                break;
+                case 'msgPerson':
+                    buf = tcpPkg.packageData(data)
+                    for (let id in sessions) {
+                        if (data.data.toName == sessions[id].client.name) {
+                            sessions[id].client.write(buf)
+                            break;
+                        }
+                    }
+                default:break;
+        }
     }
 });
 // server.on('connection', (client) => {
@@ -48,4 +70,3 @@ process.on('message', (m, client) => {
 //     });
 
 // });
-

@@ -50,6 +50,9 @@ class controller {
                 break;
         }
     }
+    handleBroadcast(str,type){
+        process.send(JSON.stringify({type,data:str}))
+    }
     handleGetlist(){
         let back;
         if (fs.existsSync('./file')) {
@@ -72,18 +75,18 @@ class controller {
         this.client.write(tcpPkg.packageData(JSON.stringify(back)))
     }
     handleAll(str) {
-        let id;
+        this.handleBroadcast(str,'all')
         let buf = tcpPkg.packageData(str)
-        for (id in this.sessions) {
+        for (let id in this.sessions) {
             if (this.o.data.name != this.sessions[id].client.name)
                 this.sessions[id].client.write(buf)
         }
     }
 
     handlePerson(str) {
-        let id;
+        this.handleBroadcast(str,'msgPerson')
         let buf = tcpPkg.packageData(str)
-        for (id in this.sessions) {
+        for (let id in this.sessions) {
             if (this.o.data.toName == this.sessions[id].client.name) {
                 this.sessions[id].client.write(buf)
                 break;
