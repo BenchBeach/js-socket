@@ -41,7 +41,7 @@ process.on('message', (m, client) => {
                 case 'msgPerson':
                     buf = tcpPkg.packageData(data)
                     for (let id in sessions) {
-                        if (data.data.toName == sessions[id].client.name) {
+                        if (JSON.parse(data).data.toName == sessions[id].client.name) {
                             sessions[id].client.write(buf)
                             break;
                         }

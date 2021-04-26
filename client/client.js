@@ -3,6 +3,7 @@ import controller from './controller.js';
 import readline from 'readline';
 import request from './request.js';
 import {port,hostname} from './config.js'
+import mic from 'microphone';
 
 const socket = new net.Socket();
 
