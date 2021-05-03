@@ -3,6 +3,7 @@ import tcpPkg from '../tcp_pkg/tcp_pkg.js';
 import { port, hostname } from './config.js'
 import fs from 'fs'
 import controller from './controller.js';
+import mic from 'mic';
 
 class request {
     constructor(ctrl) {
@@ -60,7 +61,7 @@ class request {
         const socket = new net.Socket();
         let ctrl = new controller(socket)
         socket.connect(port, hostname, () => {
-            ctrl.handleWrite({type:'dowmload',data:{fileName:toMsg}})
+            ctrl.handleWrite({ type: 'dowmload', data: { fileName: toMsg } })
         });
 
 
@@ -77,6 +78,24 @@ class request {
             this.ctrl.handleGateway(JSON.stringify({ type: 'msg', data: { name: '文件助手', msg: `文件传输完成` } }))
         });
     }
+    handleRecord(time=5) {
+        let micInstance = mic({
+            rate: '16000',
+            channels: '1',
+            debug: true,
+            exitOnSilence: 6
+        });
+        let micInputStream = micInstance.getAudioStream();
+        let outputFileStream = fs.WriteStream('output.raw');
+        micInputStream.pipe(outputFileStream);
+        micInputStream.on('startComplete', function() {
+            console.log("Got SIGNAL startComplete");
+            setTimeout(function() {
+                    micInstance.stop();
+            }, time*1000);
+        });
+        micInstance.start();
+    }
     Interceptors(msg) {
         let msgPersonReg = /^#.+#/g
         this.data = {}
@@ -92,6 +111,9 @@ class request {
                     break;
                 case 'download':
                     this.handleDownload(toMsg.trim())
+                    break;
+                case 'record':
+                    this.handleRecord(parseInt(toMsg.trim()))
                     break;
                 default:
                     this.data = {
