@@ -94,7 +94,7 @@ class request {
         if (!fs.existsSync('./ClientCache')) {
             fs.mkdirSync('./ClientCache')
         }
-        console.log(fs.existsSync("./ClientCache/output.raw"))
+        //console.log(fs.existsSync("./ClientCache/output.raw"))
 
         // if (fs.existsSync("./ClientCache/output.raw")) {
         //     fs.unlinkSync("./ClientCache/output.raw")

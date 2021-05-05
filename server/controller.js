@@ -36,6 +36,9 @@ class controller {
             case 'audio':
                 this.handleFile(true);
                 break;
+            case 'getaudio':
+                this.handleDownload(true);
+                break;
             case 'dowmload':
                 this.handleDownload();
                 break;
@@ -130,8 +133,8 @@ class controller {
             }
             this.hasSend = 0;
             this.fileBuf = '';//buffer存储对象
-            let audioFileName=`./ServerAudioCache/${this.o.data.name}_${moment().format('MMMM-Do-YYYY-h-mm-ss')}.raw`
-            this.audioFileName=audioFileName;
+            let audioFileName = `./ServerAudioCache/${this.o.data.name}_${moment().format('MMMM-Do-YYYY-h-mm-ss')}.raw`
+            this.audioFileName = audioFileName;
             this.fd = fs.openSync(audioFileName, 'w+');
         } else {
             if (!fs.existsSync('./file')) {
@@ -143,27 +146,51 @@ class controller {
         }
     }
 
-    handleDownload() {
-        this.client.name = "文件下载"
-        const fileInfo = fs.statSync(`./file/${this.o.data.fileName}`);
-        const fileSize = fileInfo.size;
-        const packageSize = 4096;
-        let sendSize = 0;
-        let strData = JSON.stringify({
-            type: 'file',
-            data: {
-                fileName: this.o.data.fileName,
-                fileSize
+    handleDownload(isAudio = false) {
+        console.log(isAudio, 'sdsdsd')
+        if (isAudio) {
+            const fileInfo = fs.statSync(`./ServerAudioCache/${this.o.data.fileName}`);
+            const fileSize = fileInfo.size;
+            const packageSize = 4096;
+            let sendSize = 0;
+            let strData = JSON.stringify({
+                type: 'audiofile',
+                data: {
+                    fileName: this.o.data.fileName,
+                    fileSize
+                }
+            })
+            this.client.write(tcpPkg.packageData(strData))
+            let fd = fs.openSync(`./ServerAudioCache/${this.o.data.fileName}`, 'r');
+            let readBuf = new Buffer.alloc(packageSize);
+            while (sendSize < fileSize) {
+                fs.readSync(fd, readBuf, 0, readBuf.length, sendSize);
+                let Filedata = readBuf.toString('hex');
+                this.client.write(tcpPkg.packageData(Filedata));
+                sendSize += packageSize;
             }
-        })
-        this.client.write(tcpPkg.packageData(strData))
-        let fd = fs.openSync(`./file/${this.o.data.fileName}`, 'r');
-        let readBuf = new Buffer.alloc(packageSize);
-        while (sendSize < fileSize) {
-            fs.readSync(fd, readBuf, 0, readBuf.length, sendSize);
-            let Filedata = readBuf.toString('hex');
-            this.client.write(tcpPkg.packageData(Filedata));
-            sendSize += packageSize;
+        } else {
+            this.client.name = "文件下载"
+            const fileInfo = fs.statSync(`./file/${this.o.data.fileName}`);
+            const fileSize = fileInfo.size;
+            const packageSize = 4096;
+            let sendSize = 0;
+            let strData = JSON.stringify({
+                type: 'file',
+                data: {
+                    fileName: this.o.data.fileName,
+                    fileSize
+                }
+            })
+            this.client.write(tcpPkg.packageData(strData))
+            let fd = fs.openSync(`./file/${this.o.data.fileName}`, 'r');
+            let readBuf = new Buffer.alloc(packageSize);
+            while (sendSize < fileSize) {
+                fs.readSync(fd, readBuf, 0, readBuf.length, sendSize);
+                let Filedata = readBuf.toString('hex');
+                this.client.write(tcpPkg.packageData(Filedata));
+                sendSize += packageSize;
+            }
         }
         // console.log('传输完成')
         // this.client.destroy()
@@ -176,7 +203,9 @@ class controller {
             fs.appendFileSync(this.fd, pack);
             fs.closeSync(this.fd)
             this.client.destroy()
-            
+            if (this.type == 3) {
+                this.handleBroadcast(this.audioFileName, 'preaudio')
+            }
         } else {
             let pack = Buffer.from(data, 'hex');
             fs.appendFileSync(this.fd, pack);

@@ -29,7 +29,7 @@ process.on('message', (m, client) => {
         }
     } else {
         const {type,data}=JSON.parse(m);
-        console.log(type,"123",data)
+        // console.log(type,"121113",data)
         let buf
         switch (type) {
             case 'all':
@@ -46,6 +46,13 @@ process.on('message', (m, client) => {
                             break;
                         }
                     }
+                case 'preaudio':
+                    buf = tcpPkg.packageData(JSON.stringify({type,data:{fileName:data.split('/').slice(-1)[0]}}))
+                    console.log(JSON.stringify({type,data:{fileName:data}}))
+                    for (let id in sessions) {
+                            sessions[id].client.write(buf)
+                    }
+                    break;
                 default:break;
         }
     }

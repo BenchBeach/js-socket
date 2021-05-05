@@ -3,75 +3,102 @@ import fs from 'fs'
 
 class controller {
     constructor(client) {
-        this.type=0
+        this.type = 0
         this.client = client
         this.client.setEncoding = 'UTF-8';
         this.client.lastPkg = null;
     }
-    print(str){
+    print(str) {
         console.log(str)
     }
-    setName(name){
-        this.name=name
+    setName(name) {
+        this.name = name
     }
-    handleWrite(data){
-        let str=JSON.stringify(data)
+    handleWrite(data) {
+        let str = JSON.stringify(data)
         let buf = tcpPkg.packageData(str)
         this.client.write(buf)
     }
-    handleMsg(){
+    handleMsg() {
         process.stdout.clearLine();
         process.stdout.cursorTo(0);
-        const {msg,name}=this.o.data
+        const { msg, name } = this.o.data
         process.stdout.write(`${name}：${msg}\n`)
         process.stdout.write(`\x1b[31m${this.name}：\x1b[0m`);
     }
-    handlePerson(){
+    handlePerson() {
         process.stdout.clearLine();
         process.stdout.cursorTo(0);
-        const {msg,name}=this.o.data
+        const { msg, name } = this.o.data
         process.stdout.write(`\x1B[36m${name} TO U：${msg}\x1B[0m\n`)
         process.stdout.write(`\x1b[31m${this.name}：\x1b[0m`);
     }
-    handleExit(){
+    handleExit() {
         process.stdout.clearLine();
         process.stdout.cursorTo(0);
-        const {msg,name}=this.o.data
+        const { msg, name } = this.o.data
         process.stdout.write(`${name}：${msg}\n`)
         process.exit()
     }
-    handleGet(){
+    handleGet() {
         process.stdout.clearLine();
         process.stdout.cursorTo(0);
-        if(this.o.data.list.length!=0){
-            for(let item of this.o.data.list){
+        if (this.o.data.list.length != 0) {
+            for (let item of this.o.data.list) {
                 process.stdout.write(`\x1B[36m文件：${item}\x1B[0m\n`)
             }
-        }else{
+        } else {
             process.stdout.write(`\x1B[36m没有文件\x1B[0m\n`)
         }
         process.stdout.write(`\x1b[31m${this.name}：\x1b[0m`);
     }
-    handleFile() {
-        this.type = 1
-        if (!fs.existsSync('./downfile')) {
-            fs.mkdirSync('./downfile')
+    handleFile(isAudio = false) {
+        if (isAudio) {
+            if (!fs.existsSync('./ClientCache')) {
+                fs.mkdirSync('./ClientCache')
+            }
+            this.type = 3
+            this.hasSend = 0;
+            this.fileBuf = '';//buffer存储对象
+            this.fd = fs.openSync(`./ClientCache/${this.o.data.fileName}`, 'w+');
         }
-        this.hasSend = 0;
-        this.fileBuf = '';//buffer存储对象
-        this.fd = fs.openSync(`./downfile/${this.o.data.fileName}`, 'w+');
+        else {
+            this.type = 1
+            if (!fs.existsSync('./downfile')) {
+                fs.mkdirSync('./downfile')
+            }
+            this.hasSend = 0;
+            this.fileBuf = '';//buffer存储对象
+            this.fd = fs.openSync(`./downfile/${this.o.data.fileName}`, 'w+');
+        }
     }
     handleRaw(data) {
         this.hasSend = this.hasSend + 4096;
         if (this.hasSend >= this.o.data.fileSize) {
-            let pack = Buffer.from(data.slice(0, this.o.data.fileSize*2 % 4096), 'hex');
+            let pack = Buffer.from(data.slice(0, this.o.data.fileSize * 2 % 4096), 'hex');
             fs.appendFileSync(this.fd, pack);
             fs.closeSync(this.fd)
-            this.client.destroy()
+            if (this.type == 3) {
+                this.type = 0
+            }
+            else {
+                this.client.destroy()
+            }
         } else {
             let pack = Buffer.from(data, 'hex');
             fs.appendFileSync(this.fd, pack);
         }
+    }
+    handlepreAudio() {
+        const data = {
+            type: 'getaudio',
+            data:{
+                fileName:this.o.data.fileName
+            }
+        }
+        let str = JSON.stringify(data)
+        let buf = tcpPkg.packageData(str)
+        this.client.write(buf)
     }
     handleGateway(str) {
         this.o = JSON.parse(str)
@@ -88,8 +115,14 @@ class controller {
             case 'file':
                 this.handleFile();
                 break;
+            case 'audiofile':
+                this.handleFile(true);
+                break;
             case 'get':
                 this.handleGet()
+                break;
+            case 'preaudio':
+                this.handlepreAudio();
                 break;
             default:
                 this.handleMsg();
@@ -122,6 +155,9 @@ class controller {
                     this.handleGateway(curBuffer.toString())
                     break;
                 case 1:
+                    this.handleRaw(curBuffer.toString())
+                    break;
+                case 3:
                     this.handleRaw(curBuffer.toString())
             }
 
