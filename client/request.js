@@ -13,7 +13,7 @@ class request {
     setName(name) {
         this.name = name
     }
-    handleFile(msg) {
+    handleFile(msg, isAudio = false) {
         const socket = new net.Socket();
 
         socket.connect(port, hostname, () => {
@@ -21,13 +21,25 @@ class request {
             const fileSize = fileInfo.size;
             const packageSize = 4096;
             let sendSize = 0;
-            let strData = JSON.stringify({
-                type: 'file',
-                data: {
-                    fileName: msg.split('/').slice(-1)[0],
-                    fileSize
-                }
-            })
+            let strData;
+            if (isAudio = true) {
+                strData = JSON.stringify({
+                    type: 'audio',
+                    data: {
+                        fileName: msg.split('/').slice(-1)[0],
+                        fileSize,
+                        name: this.name
+                    }
+                })
+            } else {
+                strData = JSON.stringify({
+                    type: 'file',
+                    data: {
+                        fileName: msg.split('/').slice(-1)[0],
+                        fileSize
+                    }
+                })
+            }
             socket.write(tcpPkg.packageData(strData))
             let fd = fs.openSync(msg, 'r');
             let readBuf = new Buffer.alloc(packageSize);
@@ -48,7 +60,7 @@ class request {
         });
 
         socket.on('close', () => {
-            this.ctrl.handleGateway(JSON.stringify({ type: 'msg', data: { name: '文件助手', msg: `文件${msg.split('/').slice(-1)[0]}传输完成` } }))
+            this.ctrl.handleGateway(JSON.stringify({ type: 'msg', data: { name: '文件助手', msg: `${isAudio ? '语音' : '文件'}${msg.split('/').slice(-1)[0]}传输完成` } }))
         });
     }
     handleGet() {
@@ -78,21 +90,35 @@ class request {
             this.ctrl.handleGateway(JSON.stringify({ type: 'msg', data: { name: '文件助手', msg: `文件传输完成` } }))
         });
     }
-    handleRecord(time=5) {
+    handleRecord(time = 5) {
+        if (!fs.existsSync('./ClientCache')) {
+            fs.mkdirSync('./ClientCache')
+        }
+        console.log(fs.existsSync("./ClientCache/output.raw"))
+
+        // if (fs.existsSync("./ClientCache/output.raw")) {
+        //     fs.unlinkSync("./ClientCache/output.raw")
+        //     console.log('rm old')
+        // }
         let micInstance = mic({
-            rate: '16000',
+            rate: '4000',
             channels: '1',
             debug: true,
             exitOnSilence: 6
         });
         let micInputStream = micInstance.getAudioStream();
-        let outputFileStream = fs.WriteStream('output.raw');
+        let outputFileStream = fs.WriteStream(`./ClientCache/output.raw`);
+        outputFileStream.on('error', function (err) {
+            console.log(err);
+        });
         micInputStream.pipe(outputFileStream);
-        micInputStream.on('startComplete', function() {
+        micInputStream.on('startComplete', () => {
             console.log("Got SIGNAL startComplete");
-            setTimeout(function() {
-                    micInstance.stop();
-            }, time*1000);
+            setTimeout(() => {
+                micInstance.stop();
+                outputFileStream.emit('close');
+                this.handleFile(`./ClientCache/output.raw`, true)
+            }, time * 1000);
         });
         micInstance.start();
     }

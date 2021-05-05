@@ -1,5 +1,6 @@
 import tcpPkg from '../tcp_pkg/tcp_pkg.js';
 import fs from 'fs'
+import moment from 'moment';
 
 class controller {
     constructor(client, type = 0) {
@@ -32,6 +33,9 @@ class controller {
             case 'file':
                 this.handleFile();
                 break;
+            case 'audio':
+                this.handleFile(true);
+                break;
             case 'dowmload':
                 this.handleDownload();
                 break;
@@ -50,24 +54,24 @@ class controller {
                 break;
         }
     }
-    handleBroadcast(str,type){
-        process.send(JSON.stringify({type,data:str}))
+    handleBroadcast(str, type) {
+        process.send(JSON.stringify({ type, data: str }))
     }
-    handleGetlist(){
+    handleGetlist() {
         let back;
         if (fs.existsSync('./file')) {
-            const list=fs.readdirSync('./file')
+            const list = fs.readdirSync('./file')
             back = {
                 type: 'get',
                 data: {
                     list
                 }
             }
-        }else{
+        } else {
             back = {
                 type: 'get',
                 data: {
-                    list:[]
+                    list: []
                 }
             }
         }
@@ -75,7 +79,7 @@ class controller {
         this.client.write(tcpPkg.packageData(JSON.stringify(back)))
     }
     handleAll(str) {
-        this.handleBroadcast(str,'all')
+        this.handleBroadcast(str, 'all')
         let buf = tcpPkg.packageData(str)
         for (let id in this.sessions) {
             if (this.o.data.name != this.sessions[id].client.name)
@@ -84,7 +88,7 @@ class controller {
     }
 
     handlePerson(str) {
-        this.handleBroadcast(str,'msgPerson')
+        this.handleBroadcast(str, 'msgPerson')
         let buf = tcpPkg.packageData(str)
         for (let id in this.sessions) {
             if (this.o.data.toName == this.sessions[id].client.name) {
@@ -116,50 +120,63 @@ class controller {
         }
     }
 
-    handleFile() {
+    handleFile(isAudio = false) {
         this.type = 1
         this.client.name = "文件传输"
-        if (!fs.existsSync('./file')) {
-            fs.mkdirSync('./file')
+        if (isAudio) {
+            this.type = 3;
+            if (!fs.existsSync('./ServerAudioCache')) {
+                fs.mkdirSync('./ServerAudioCache')
+            }
+            this.hasSend = 0;
+            this.fileBuf = '';//buffer存储对象
+            let audioFileName=`./ServerAudioCache/${this.o.data.name}_${moment().format('MMMM-Do-YYYY-h-mm-ss')}.raw`
+            this.audioFileName=audioFileName;
+            this.fd = fs.openSync(audioFileName, 'w+');
+        } else {
+            if (!fs.existsSync('./file')) {
+                fs.mkdirSync('./file')
+            }
+            this.hasSend = 0;
+            this.fileBuf = '';//buffer存储对象
+            this.fd = fs.openSync(`./file/${this.o.data.fileName}`, 'w+');
         }
-        this.hasSend = 0;
-        this.fileBuf = '';//buffer存储对象
-        this.fd = fs.openSync(`./file/${this.o.data.fileName}`, 'w+');
     }
 
-    handleDownload(){
+    handleDownload() {
         this.client.name = "文件下载"
         const fileInfo = fs.statSync(`./file/${this.o.data.fileName}`);
-            const fileSize = fileInfo.size;
-            const packageSize = 4096;
-            let sendSize = 0;
-            let strData = JSON.stringify({
-                type: 'file',
-                data: {
-                    fileName: this.o.data.fileName,
-                    fileSize
-                }
-            })
-            this.client.write(tcpPkg.packageData(strData))
-            let fd = fs.openSync(`./file/${this.o.data.fileName}`, 'r');
-            let readBuf = new Buffer.alloc(packageSize);
-            while (sendSize < fileSize) {
-                fs.readSync(fd, readBuf, 0, readBuf.length, sendSize);
-                let Filedata = readBuf.toString('hex');
-                this.client.write(tcpPkg.packageData(Filedata));
-                sendSize += packageSize;
+        const fileSize = fileInfo.size;
+        const packageSize = 4096;
+        let sendSize = 0;
+        let strData = JSON.stringify({
+            type: 'file',
+            data: {
+                fileName: this.o.data.fileName,
+                fileSize
             }
-            // console.log('传输完成')
-            // this.client.destroy()
+        })
+        this.client.write(tcpPkg.packageData(strData))
+        let fd = fs.openSync(`./file/${this.o.data.fileName}`, 'r');
+        let readBuf = new Buffer.alloc(packageSize);
+        while (sendSize < fileSize) {
+            fs.readSync(fd, readBuf, 0, readBuf.length, sendSize);
+            let Filedata = readBuf.toString('hex');
+            this.client.write(tcpPkg.packageData(Filedata));
+            sendSize += packageSize;
+        }
+        // console.log('传输完成')
+        // this.client.destroy()
     }
     handleRaw(data) {
         this.hasSend = this.hasSend + 4096;
-        console.log(this.hasSend,':',this.o.data.fileSize)
+        console.log(this.hasSend, ':', this.o.data.fileSize)
         if (this.hasSend >= this.o.data.fileSize) {
-            let pack = Buffer.from(data.slice(0, this.o.data.fileSize*2 % 4096), 'hex');
+            let pack = Buffer.from(data.slice(0, this.o.data.fileSize * 2 % 4096), 'hex');
             fs.appendFileSync(this.fd, pack);
             fs.closeSync(this.fd)
             this.client.destroy()
+            
         } else {
             let pack = Buffer.from(data, 'hex');
             fs.appendFileSync(this.fd, pack);
@@ -191,6 +208,8 @@ class controller {
                     this.handleGateway(curBuffer.toString())
                     break;
                 case 1:
+                    this.handleRaw(curBuffer.toString())
+                case 3:
                     this.handleRaw(curBuffer.toString())
             }
             // console.log(curBuffer.toString())
