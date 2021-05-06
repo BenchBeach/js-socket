@@ -1,5 +1,6 @@
 import tcpPkg from '../tcp_pkg/tcp_pkg.js';
 import fs from 'fs'
+import cp from 'child_process'
 
 class controller {
     constructor(client) {
@@ -60,6 +61,7 @@ class controller {
             this.type = 3
             this.hasSend = 0;
             this.fileBuf = '';//buffer存储对象
+            this.tempAudioName=this.o.fileName;
             this.fd = fs.openSync(`./ClientCache/${this.o.data.fileName}`, 'w+');
         }
         else {
@@ -80,6 +82,7 @@ class controller {
             fs.closeSync(this.fd)
             if (this.type == 3) {
                 this.type = 0
+                let audioplay=cp.spawnSync(`sox`,['./ClientCache/output.raw','-t','waveaudio'])
             }
             else {
                 this.client.destroy()
